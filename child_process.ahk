@@ -2,8 +2,8 @@
  * @description Create a child process, and read stdout/stderr
  * asynchronously, supporting multiple stdin inputs.
  * @author thqby
- * @date 2025/11/02
- * @version 2.0.6
+ * @date 2026/04/30
+ * @version 2.0.7
  ***********************************************************************/
 
 class child_process {
@@ -78,14 +78,13 @@ class child_process {
 			default: show := 1
 		}
 
-		static mFlags_offset := (VerCompare(A_AhkVersion, '2.1-alpha.3') >= 0 ? 6 : 4) * A_PtrSize + 8, USEHANDLE := 0x10000000
 		(handles := []).__Delete := closehandles
 
 		if !IsSet(stdin) {
 			if !DllCall('CreatePipe', "ptr*", &stdin := 0, "ptr*", &stdinW := 0, 'ptr', 0, 'uint', 0)
 				Throw OSError()
-			handles.Push(stdin), p := ObjPtr(this.stdin := FileOpen(stdinW, 'h', ge(encoding, 1)))
-			NumPut('uint', NumGet(p, mFlags_offset, 'uint') & ~USEHANDLE, p, mFlags_offset)
+			handles.Push(stdin), this.stdin := FileOpen(stdinW, 'h', ge(encoding, 1))
+			this.stdin.DefineProp('__Delete', { call: o => (o.Close(), DllCall('CloseHandle', 'ptr', o.Handle)) })
 		}
 		loop 2
 			IsSet(%k := A_Index == 1 ? 'stdout' : 'stderr'%) ||
