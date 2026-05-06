@@ -10,20 +10,21 @@ wv := wvc.CoreWebView2
 env := wv.Environment
 wv.Navigate(A_ScriptDir '/index.html')
 uri := 'file:///' StrReplace(A_ScriptDir, '\', '/') '/*'
-uriLen := StrLen(uri)
 wv.AddWebResourceRequestedFilter(uri, 7)
+wv.AddWebResourceRequestedFilter(StrReplace(uri, ' ', '%20'), 7)
 wv.AddWebResourceRequestedFilter('file:///*', 3)
 token := wv.WebResourceRequested(wrr)
 wrr(sender, args) {
 	switch args.ResourceContext {
 		case 7:
-			switch SubStr((req := args.Request).Uri, uriLen) {
+			switch SubStr(u := (req := args.Request).Uri, InStr(u, '/', , -1) + 1) {
 				case 'dirSelect': dirSelect(args)
 				case 'ocr': ocr(args, req)
 			}
 		case 3:
 			try args.Response := env.CreateWebResourceResponse(
-				WebView2.CreateMemStream(FileRead(SubStr(args.Request.Uri, 9), 'raw')), 200, 'OK', '')
+				WebView2.CreateMemStream(FileRead(SubStr(
+					StrReplace(args.Request.Uri, '%20', ' '), 9), 'raw')), 200, 'OK', '')
 	}
 	static dirSelect(args) {
 		static cur_dir := A_ScriptDir
