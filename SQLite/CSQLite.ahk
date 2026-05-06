@@ -2,8 +2,8 @@
  * @description SQLite class
  * @file CSQLite.ahk
  * @author thqby
- * @date 2022/04/23
- * @version 0.0.4
+ * @date 2026/05/06
+ * @version 0.0.5
  ***********************************************************************/
 
 class CSQLite {
@@ -21,12 +21,11 @@ class CSQLite {
 				&& !(CSQLite.hModule := DllCall("LoadLibrary", "Str", SQLiteDLL, "UPtr")))
 				throw Error("DLL " SQLiteDLL " does not exist!")
 			CSQLite.Version := StrGet(DllCall("SQLite3.dll\sqlite3_libversion", "Cdecl UPtr"), "UTF-8")
-			SQLVersion := StrSplit(CSQLite.Version, ".")
-			MinVersion := StrSplit(CSQLite._MinVersion, ".")
-			if (SQLVersion[1] < MinVersion[1]) || ((SQLVersion[1] = MinVersion[1]) && (SQLVersion[2] < MinVersion[2]))
+			if VerCompare(CSQLite.Version, CSQLite._MinVersion) < 0 {
 				DllCall("FreeLibrary", "Ptr", CSQLite.hModule), CSQLite.hModule := 0
 				throw Error("Version " . CSQLite.Version . " of SQLite3.dll is not supported!`n`n"
 					. "You can download the current version from www.sqlite.org!")
+			}
 		}
 		CSQLite._RefCount += 1
 	}
@@ -170,7 +169,6 @@ class CSQLite {
 			if (FileGetSize(tmp, "K") < 16)
 				return (FileDelete(tmp), false)
 			FileMove tmp, DBPath, 1
-			this.Changes := 0
 		}
 		return true
 	}
